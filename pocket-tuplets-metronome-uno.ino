@@ -2,21 +2,23 @@
 
 const byte STRONG_BEAT_PIN = A5;
 const byte BUZZER_PIN = A0;
-const double STARTUP_BASE_PERIOD = 1000; // Equals One second
+const double STARTUP_BASE_PERIOD = 1000; // milliseconds. Equals One second
 
-// config mode Set As Nth Subdivision
+const int BUZZER_HIGH_DURATION = 7; // milliseconds. The longer, the louder
+
+// used for: config mode Set As Nth Subdivision
 const byte SET_AS_NTH_SUBDIVISION = A3;
 
-// config mode Manually Set Period
+// used for: config mode Manually Set Period
 const byte MANUALLY_SET_PERIOD = A2; // begin config
 const byte PERIOD_START_PIN = A4;
 const byte PERIOD_END_PIN = A5; // this shares pin with the strong beat, on purpose,
                                 // just to avoid automatically jumping to the nth subdivision.
                                 // example: if you used pin 8 as PERIOD_END_PIN, you would hear 8ths
-                                // as soon as you clicked that pin
+                                // as soon as you clicked that pin. for some reason.
 
 void setup() {
-  pinMode(STRONG_BEAT_PIN, INPUT_PULLUP);  // measure's strong beat
+  pinMode(STRONG_BEAT_PIN, INPUT_PULLUP);  // hear measure's strong beat
 
   pinMode(2, INPUT_PULLUP);  // subdivision of 2
   pinMode(3, INPUT_PULLUP);  // subdivision of 3
@@ -46,15 +48,15 @@ void setup() {
 }
 
 byte getSubdivisionInput() {
-  if (!digitalRead(STRONG_BEAT_PIN)) {
-    return 1;
+  if (!digitalRead(STRONG_BEAT_PIN)) { 
+    return 1; // subdivision 1 is the same as sounding only the downbeat (strong beat)
   }
   for (byte inputPin = 2; inputPin < 13; inputPin++) {
     if (!digitalRead(inputPin)) {
-      return inputPin;
+      return inputPin; // pin corresponds to the chosen subdivision
     }
   }
-
+  // else
   return 0;  // no pin
 }
 
@@ -73,7 +75,9 @@ void loop() {
   static double basePeriod = STARTUP_BASE_PERIOD;
   static double instancePeriod = basePeriod;
   static double currentTimeRemainder = 0;
-  static byte subdivision = 1;  // initial subdivision, should be 1 to match with the initial value of instancePeriod being basePeriod
+  static byte subdivision = 1;  // initial subdivision, should be 1, to match with
+                                // the fact that the initial value of
+                                // instancePeriod is the same as basePeriod
   static byte configMode = 0;   // initial config mode state
   static bool lastInputWasASubdivisionPin = true;
 
@@ -144,7 +148,7 @@ void loop() {
   if (currentTimeRemainder < lastTimeRemainder) { // only happens when currentTimeRemainder loops back to zero
     // beep
     digitalWrite(BUZZER_PIN, HIGH);
-    delay(7);
+    delay(BUZZER_HIGH_DURATION);
     digitalWrite(BUZZER_PIN, LOW);
   }
 
